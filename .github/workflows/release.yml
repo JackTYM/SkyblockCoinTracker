@@ -23,11 +23,12 @@ jobs:
       - name: Get latest release version
         id: get_latest
         run: |
-          LATEST=$(gh release list --limit 1 --json tagName --jq '.[0].tagName // "v0.9"' 2>/dev/null || echo "v0.9")
+          LATEST_TAG=$(gh release list --limit 1 --json tagName --jq '.[0].tagName // "v0.9"' 2>/dev/null || echo "v0.9")
           # Strip 'v' prefix if present
-          LATEST_VERSION="${LATEST#v}"
+          LATEST_VERSION="${LATEST_TAG#v}"
           echo "Latest version: $LATEST_VERSION"
           echo "LATEST_VERSION=$LATEST_VERSION" >> $GITHUB_OUTPUT
+          echo "LATEST_TAG=$LATEST_TAG" >> $GITHUB_OUTPUT
         env:
           GH_TOKEN: ${{ github.token }}
 
@@ -44,6 +45,31 @@ jobs:
           echo "Next version: $NEXT"
           echo "VERSION=$NEXT" >> $GITHUB_OUTPUT
 
+      - name: Generate changelog
+        id: changelog
+        run: |
+          LATEST_TAG="${{ steps.get_latest.outputs.LATEST_TAG }}"
+
+          # Get commits since last release
+          if git rev-parse "$LATEST_TAG" >/dev/null 2>&1; then
+            COMMITS=$(git log --pretty=format:"- %s (%h)" "$LATEST_TAG"..HEAD)
+          else
+            # No previous tag, get recent commits
+            COMMITS=$(git log --pretty=format:"- %s (%h)" -20)
+          fi
+
+          # Write to file to preserve newlines
+          echo "$COMMITS" > changelog.txt
+
+          # Also output for the release body
+          {
+            echo 'CHANGELOG<<EOF'
+            echo "## Changes"
+            echo ""
+            echo "$COMMITS"
+            echo 'EOF'
+          } >> $GITHUB_OUTPUT
+
       - name: Set up JDK 21
         uses: actions/setup-java@v4
         with:
@@ -58,13 +84,30 @@ jobs:
         env:
           MOD_VERSION: ${{ steps.next_version.outputs.VERSION }}
 
-      - name: Create Release
+      - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
           tag_name: v${{ steps.next_version.outputs.VERSION }}
           name: Release v${{ steps.next_version.outputs.VERSION }}
+          body: ${{ steps.changelog.outputs.CHANGELOG }}
           draft: false
           prerelease: false
-          generate_release_notes: true
           files: |
             build/libs/*[!-sources].jar
+
+      - name: Publish to Modrinth
+        uses: Kir-Antipov/mc-publish@v3.3
+        with:
+          modrinth-id: ${{ vars.MODRINTH_PROJECT_ID }}
+          modrinth-token: ${{ secrets.MODRINTH_TOKEN }}
+
+          files: build/libs/!(*-sources).jar
+          name: SkyblockCoinTracker v${{ steps.next_version.outputs.VERSION }}
+          version: ${{ steps.next_version.outputs.VERSION }}
+          version-type: release
+          changelog: ${{ steps.changelog.outputs.CHANGELOG }}
+
+          loaders: fabric
+          game-versions: 1.21.x
+          dependencies: |
+            fabric-api | depends
