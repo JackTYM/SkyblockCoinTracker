@@ -98,10 +98,12 @@ jobs:
 
       - name: Get Modrinth project ID
         id: modrinth_id
-        continue-on-error: true
         run: |
-          PROJECT_ID=$(curl -s -H "Authorization: ${{ secrets.MODRINTH_TOKEN }}" \
-            "https://api.modrinth.com/v2/project/${{ vars.MODRINTH_PROJECT_ID }}" | jq -r '.id')
+          RESPONSE=$(curl -s -H "Authorization: ${{ secrets.MODRINTH_TOKEN }}" \
+            "https://api.modrinth.com/v2/project/${{ vars.MODRINTH_PROJECT_ID }}")
+          echo "API Response: $RESPONSE"
+          PROJECT_ID=$(echo "$RESPONSE" | jq -r '.id // empty')
+          echo "Resolved project ID: $PROJECT_ID"
           echo "PROJECT_ID=$PROJECT_ID" >> $GITHUB_OUTPUT
 
       - name: Publish to Modrinth
