@@ -5,10 +5,10 @@ import dev.jacktym.skyblockcointracker.client.CoinTrackerConfig;
 import dev.jacktym.skyblockcointracker.client.CoinTrackerState;
 import dev.jacktym.skyblockcointracker.client.util.FormatUtil;
 import net.fabricmc.fabric.api.client.rendering.v1.HudRenderCallback;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.font.TextRenderer;
-import net.minecraft.client.gui.DrawContext;
-import net.minecraft.client.render.RenderTickCounter;
+import net.minecraft.client.DeltaTracker;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.Font;
+import net.minecraft.client.gui.GuiGraphics;
 
 public class CoinOverlay implements HudRenderCallback {
     public static final CoinOverlay INSTANCE = new CoinOverlay();
@@ -25,28 +25,23 @@ public class CoinOverlay implements HudRenderCallback {
     }
 
     @Override
-    public void onHudRender(DrawContext context, RenderTickCounter tickCounter) {
+    public void onHudRender(GuiGraphics context, DeltaTracker tickCounter) {
         CoinTrackerConfig config = CoinTrackerConfig.getInstance();
         if (!config.isEnabled()) return;
 
-        MinecraftClient client = MinecraftClient.getInstance();
-        if (client.player == null || client.options.hudHidden) return;
+        Minecraft client = Minecraft.getInstance();
+        if (client.player == null || client.options.hideGui) return;
 
         CoinTrackerState state = CoinTracker.getInstance().getState();
-        TextRenderer textRenderer = client.textRenderer;
+        Font font = client.font;
 
         int x = config.getOverlayX();
         int y = config.getOverlayY();
-        float scale = config.getScale();
-
-        context.getMatrices().push();
-        context.getMatrices().translate(x, y, 0);
-        context.getMatrices().scale(scale, scale, 1.0f);
 
         // Line 1: Gained
         long gained = state.getGained();
         String gainedText = FormatUtil.formatCoins(gained);
-        drawLine(context, textRenderer, 0, 0, "Gained: ", gainedText + " coins");
+        drawLine(context, font, x, y, "Gained: ", gainedText + " coins");
 
         // Line 2: Time
         String timeText;
@@ -59,32 +54,30 @@ public class CoinOverlay implements HudRenderCallback {
         } else {
             timeText = FormatUtil.formatTime(state.getElapsedSeconds());
         }
-        drawLine(context, textRenderer, 0, 10, "Time: ", timeText, timeColor);
+        drawLine(context, font, x, y + 10, "Time: ", timeText, timeColor);
 
         // Line 3: Rate
         String rateText = FormatUtil.formatRate(gained, state.getElapsedSeconds()) + " coins/hr";
-        drawLine(context, textRenderer, 0, 20, "Rate: ", rateText);
-
-        context.getMatrices().pop();
+        drawLine(context, font, x, y + 20, "Rate: ", rateText);
     }
 
-    private void drawLine(DrawContext context, TextRenderer textRenderer, int x, int y, String label, String value) {
-        drawLine(context, textRenderer, x, y, label, value, WHITE);
+    private void drawLine(GuiGraphics context, Font font, int x, int y, String label, String value) {
+        drawLine(context, font, x, y, label, value, WHITE);
     }
 
-    private void drawLine(DrawContext context, TextRenderer textRenderer, int x, int y, String label, String value, int valueColor) {
+    private void drawLine(GuiGraphics context, Font font, int x, int y, String label, String value, int valueColor) {
         // Draw label in gold bold
-        context.drawTextWithShadow(textRenderer, label, x, y, GOLD);
-        int labelWidth = textRenderer.getWidth(label);
+        context.drawString(font, label, x, y, GOLD, true);
+        int labelWidth = font.width(label);
         // Draw value
-        context.drawTextWithShadow(textRenderer, value, x + labelWidth, y, valueColor);
+        context.drawString(font, value, x + labelWidth, y, valueColor, true);
     }
 
     public int getWidth() {
-        MinecraftClient client = MinecraftClient.getInstance();
-        TextRenderer textRenderer = client.textRenderer;
+        Minecraft client = Minecraft.getInstance();
+        Font font = client.font;
         // Approximate width based on longest expected line
-        return textRenderer.getWidth("Gained: 999,999,999 coins");
+        return font.width("Gained: 999,999,999 coins");
     }
 
     public int getHeight() {

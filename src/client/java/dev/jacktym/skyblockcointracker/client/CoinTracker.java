@@ -1,9 +1,9 @@
 package dev.jacktym.skyblockcointracker.client;
 
 import dev.jacktym.skyblockcointracker.client.util.FormatUtil;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.text.Text;
-import net.minecraft.util.Formatting;
+import net.minecraft.ChatFormatting;
+import net.minecraft.client.Minecraft;
+import net.minecraft.network.chat.Component;
 
 public class CoinTracker {
     private static final CoinTracker INSTANCE = new CoinTracker();
@@ -92,11 +92,11 @@ public class CoinTracker {
     }
 
     private void sendMessage(String message) {
-        MinecraftClient client = MinecraftClient.getInstance();
+        Minecraft client = Minecraft.getInstance();
         if (client.player != null) {
-            client.player.sendMessage(
-                Text.literal("[CoinTracker] ").formatted(Formatting.GOLD)
-                    .append(Text.literal(message).formatted(Formatting.WHITE)),
+            client.player.displayClientMessage(
+                Component.literal("[CoinTracker] ").withStyle(ChatFormatting.GOLD)
+                    .append(Component.literal(message).withStyle(ChatFormatting.WHITE)),
                 false
             );
         }

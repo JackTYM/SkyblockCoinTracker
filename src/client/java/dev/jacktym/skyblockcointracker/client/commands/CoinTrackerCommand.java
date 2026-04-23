@@ -10,17 +10,17 @@ import dev.jacktym.skyblockcointracker.client.overlay.OverlayEditScreen;
 import net.fabricmc.fabric.api.client.command.v2.ClientCommandManager;
 import net.fabricmc.fabric.api.client.command.v2.ClientCommandRegistrationCallback;
 import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.command.CommandRegistryAccess;
-import net.minecraft.text.Text;
-import net.minecraft.util.Formatting;
+import net.minecraft.ChatFormatting;
+import net.minecraft.client.Minecraft;
+import net.minecraft.commands.CommandBuildContext;
+import net.minecraft.network.chat.Component;
 
 public class CoinTrackerCommand {
     public static void register() {
         ClientCommandRegistrationCallback.EVENT.register(CoinTrackerCommand::registerCommands);
     }
 
-    private static void registerCommands(CommandDispatcher<FabricClientCommandSource> dispatcher, CommandRegistryAccess registryAccess) {
+    private static void registerCommands(CommandDispatcher<FabricClientCommandSource> dispatcher, CommandBuildContext registryAccess) {
         var ctCommand = ClientCommandManager.literal("ct")
             .then(ClientCommandManager.literal("on")
                 .executes(ctx -> { CoinTracker.getInstance().enable(); return 1; }))
@@ -38,8 +38,8 @@ public class CoinTrackerCommand {
                 .executes(ctx -> { CoinTracker.getInstance().reset(); return 1; }))
             .then(ClientCommandManager.literal("move")
                 .executes(ctx -> {
-                    MinecraftClient.getInstance().send(() ->
-                        MinecraftClient.getInstance().setScreen(new OverlayEditScreen()));
+                    Minecraft.getInstance().execute(() ->
+                        Minecraft.getInstance().setScreen(new OverlayEditScreen()));
                     return 1;
                 }))
             .then(ClientCommandManager.literal("pos")
@@ -94,8 +94,8 @@ public class CoinTrackerCommand {
 
     private static void sendFeedback(FabricClientCommandSource source, String message) {
         source.sendFeedback(
-            Text.literal("[CoinTracker] ").formatted(Formatting.GOLD)
-                .append(Text.literal(message).formatted(Formatting.WHITE))
+            Component.literal("[CoinTracker] ").withStyle(ChatFormatting.GOLD)
+                .append(Component.literal(message).withStyle(ChatFormatting.WHITE))
         );
     }
 }
