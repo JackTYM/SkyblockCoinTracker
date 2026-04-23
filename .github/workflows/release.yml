@@ -96,11 +96,20 @@ jobs:
           files: |
             build/libs/*[!-sources].jar
 
+      - name: Get Modrinth project ID
+        id: modrinth_id
+        continue-on-error: true
+        run: |
+          PROJECT_ID=$(curl -s -H "Authorization: ${{ secrets.MODRINTH_TOKEN }}" \
+            "https://api.modrinth.com/v2/project/${{ vars.MODRINTH_PROJECT_ID }}" | jq -r '.id')
+          echo "PROJECT_ID=$PROJECT_ID" >> $GITHUB_OUTPUT
+
       - name: Publish to Modrinth
+        if: steps.modrinth_id.outputs.PROJECT_ID != '' && steps.modrinth_id.outputs.PROJECT_ID != 'null'
         continue-on-error: true
         uses: Kir-Antipov/mc-publish@v3.3
         with:
-          modrinth-id: ${{ vars.MODRINTH_PROJECT_ID }}
+          modrinth-id: ${{ steps.modrinth_id.outputs.PROJECT_ID }}
           modrinth-token: ${{ secrets.MODRINTH_TOKEN }}
 
           files: build/libs/!(*-sources).jar
