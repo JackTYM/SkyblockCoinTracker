@@ -1,0 +1,35 @@
+{
+  "schemaVersion": 1,
+  "id": "skyblockcointracker",
+  "version": "${version}",
+  "name": "SkyblockCoinTracker",
+  "description": "",
+  "authors": [],
+  "contact": {},
+  "license": "All-Rights-Reserved",
+  "icon": "assets/skyblockcointracker/icon.png",
+  "environment": "client",
+  "entrypoints": {
+    "fabric-datagen": [
+      "dev.jacktym.skyblockcointracker.client.SkyblockcointrackerDataGenerator"
+    ],
+    "client": [
+      "dev.jacktym.skyblockcointracker.client.SkyblockcointrackerClient"
+    ],
+    "main": [
+      "dev.jacktym.skyblockcointracker.Skyblockcointracker"
+    ]
+  },
+  "mixins": [
+    "skyblockcointracker.mixins.json",
+    {
+      "config": "skyblockcointracker.client.mixins.json",
+      "environment": "client"
+    }
+  ],
+  "depends": {
+    "fabricloader": ">=${loader_version}",
+    "fabric-api": "*",
+    "minecraft": "${minecraft_version}"
+  }
+}
