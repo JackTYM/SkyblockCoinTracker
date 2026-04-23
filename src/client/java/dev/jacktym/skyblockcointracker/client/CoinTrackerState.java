@@ -4,6 +4,7 @@ public class CoinTrackerState {
     private long startPurse = 0;
     private long currentPurse = 0;
     private long pausedPurse = 0;
+    private long pausedGain = 0;
     private int elapsedSeconds = 0;
     private int secondsSinceChange = 0;
     private boolean paused = false;
@@ -18,9 +19,16 @@ public class CoinTrackerState {
     }
 
     public void updatePurse(long newPurse) {
+        // Track if this is a change (before updating currentPurse)
+        boolean changed = currentPurse != newPurse;
+
+        // Always track currentPurse, even when paused (so we can calculate delta on unpause)
+        currentPurse = newPurse;
+
+        // But don't update tracking state when paused
         if (paused) return;
 
-        if (currentPurse != newPurse) {
+        if (changed) {
             if (inactive) {
                 // Was inactive, now active again - reset
                 startPurse = newPurse;
@@ -29,7 +37,6 @@ public class CoinTrackerState {
             }
             secondsSinceChange = 0;
         }
-        currentPurse = newPurse;
 
         // Initialize start purse if this is the first update
         if (startPurse == 0) {
@@ -52,6 +59,7 @@ public class CoinTrackerState {
         if (!paused) {
             paused = true;
             pausedPurse = currentPurse;
+            pausedGain = currentPurse - startPurse;
         }
     }
 
@@ -81,6 +89,10 @@ public class CoinTrackerState {
     }
 
     public long getGained() {
+        // Return frozen gain when paused
+        if (paused) {
+            return pausedGain;
+        }
         return currentPurse - startPurse;
     }
 

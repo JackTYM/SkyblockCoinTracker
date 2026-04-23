@@ -13,10 +13,10 @@ import net.minecraft.client.gui.GuiGraphics;
 public class CoinOverlay implements HudRenderCallback {
     public static final CoinOverlay INSTANCE = new CoinOverlay();
 
-    // Formatting codes
-    private static final int GOLD = 0xFFAA00;
-    private static final int WHITE = 0xFFFFFF;
-    private static final int RED = 0xFF5555;
+    // Colors in ARGB format (alpha must be 0xFF for full opacity)
+    private static final int GOLD = 0xFFFFAA00;
+    private static final int WHITE = 0xFFFFFFFF;
+    private static final int RED = 0xFFFF5555;
 
     private CoinOverlay() {}
 
@@ -30,7 +30,8 @@ public class CoinOverlay implements HudRenderCallback {
         if (!config.isEnabled()) return;
 
         Minecraft client = Minecraft.getInstance();
-        if (client.player == null || client.options.hideGui) return;
+        if (client.player == null) return;
+        if (client.options.hideGui) return;
 
         CoinTrackerState state = CoinTracker.getInstance().getState();
         Font font = client.font;

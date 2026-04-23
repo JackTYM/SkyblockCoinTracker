@@ -12,7 +12,7 @@ public class CoinTrackerConfig {
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
     private static final Path CONFIG_PATH = FabricLoader.getInstance().getConfigDir().resolve("cointracker.json");
 
-    private boolean enabled = true;
+    private boolean enabled = false;
     private int overlayX = 10;
     private int overlayY = 10;
     private float scale = 1.0f;

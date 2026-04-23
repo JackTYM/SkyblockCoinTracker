@@ -7,7 +7,6 @@ import net.minecraft.network.chat.Component;
 
 public class CoinTracker {
     private static final CoinTracker INSTANCE = new CoinTracker();
-
     private final CoinTrackerState state = new CoinTrackerState();
 
     private CoinTracker() {}
@@ -22,15 +21,23 @@ public class CoinTracker {
             return;
         }
 
-        // Parse the coin value - remove formatting codes and extract number
-        String cleaned = line.replaceAll("[^0-9]", "");
-        if (cleaned.isEmpty()) return;
+        // Strip Minecraft formatting codes (§ followed by any character)
+        String stripped = line.replaceAll("§.", "");
+
+        // Remove anything in parentheses like "(+5)" or "(-10)"
+        String withoutParens = stripped.replaceAll("\\(.*?\\)", "");
+
+        // Extract just the number part
+        String cleaned = withoutParens.replaceAll("[^0-9]", "");
+        if (cleaned.isEmpty()) {
+            return;
+        }
 
         try {
             long purse = Long.parseLong(cleaned);
             state.updatePurse(purse);
         } catch (NumberFormatException e) {
-            // Ignore malformed values
+            // Ignore parse errors
         }
     }
 
@@ -46,12 +53,14 @@ public class CoinTracker {
 
     public void enable() {
         CoinTrackerConfig.getInstance().setEnabled(true);
-        sendMessage("Tracker enabled");
+        state.reset();
+        sendMessage("Tracker enabled (timer started)");
     }
 
     public void disable() {
         CoinTrackerConfig.getInstance().setEnabled(false);
-        sendMessage("Tracker disabled");
+        state.reset();
+        sendMessage("Tracker disabled (timer reset)");
     }
 
     public void toggle() {
