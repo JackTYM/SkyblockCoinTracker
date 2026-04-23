@@ -97,6 +97,7 @@ jobs:
             build/libs/*[!-sources].jar
 
       - name: Publish to Modrinth
+        continue-on-error: true
         uses: Kir-Antipov/mc-publish@v3.3
         with:
           modrinth-id: ${{ vars.MODRINTH_PROJECT_ID }}
