@@ -4,10 +4,11 @@ on:
   workflow_dispatch:
   push:
     branches: [ master, main ]
-    paths-ignore:
-      - '**.md'
-      - '.gitignore'
-      - 'LICENSE'
+    paths:
+      - 'src/**'
+      - 'build.gradle'
+      - 'gradle.properties'
+      - 'settings.gradle'
 
 jobs:
   release:
