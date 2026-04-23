@@ -13,6 +13,9 @@ public class SkyblockcointrackerClient implements ClientModInitializer {
         // Load config
         CoinTrackerConfig.getInstance();
 
+        // Load saved session state
+        CoinTracker.getInstance().getState().loadSavedState();
+
         // Register components
         CoinTrackerCommand.register();
         CoinTrackerKeybinds.register();

@@ -9,6 +9,17 @@ public class CoinTrackerState {
     private int secondsSinceChange = 0;
     private boolean paused = false;
     private boolean inactive = false;
+    private long savedGainOffset = 0; // Accumulated gain from previous sessions
+
+    public void loadSavedState() {
+        CoinTrackerConfig config = CoinTrackerConfig.getInstance();
+        savedGainOffset = config.getSavedGain();
+        elapsedSeconds = config.getSavedElapsedSeconds();
+    }
+
+    public void saveState() {
+        CoinTrackerConfig.getInstance().saveSessionState(getGained(), elapsedSeconds);
+    }
 
     public void reset() {
         startPurse = currentPurse;
@@ -16,6 +27,8 @@ public class CoinTrackerState {
         secondsSinceChange = 0;
         paused = false;
         inactive = false;
+        savedGainOffset = 0;
+        CoinTrackerConfig.getInstance().clearSessionState();
     }
 
     public void updatePurse(long newPurse) {
@@ -52,6 +65,11 @@ public class CoinTrackerState {
 
         if (secondsSinceChange >= timeoutSeconds) {
             inactive = true;
+        }
+
+        // Save state every 10 seconds
+        if (elapsedSeconds % 10 == 0) {
+            saveState();
         }
     }
 
@@ -91,9 +109,9 @@ public class CoinTrackerState {
     public long getGained() {
         // Return frozen gain when paused
         if (paused) {
-            return pausedGain;
+            return pausedGain + savedGainOffset;
         }
-        return currentPurse - startPurse;
+        return currentPurse - startPurse + savedGainOffset;
     }
 
     public int getElapsedSeconds() {

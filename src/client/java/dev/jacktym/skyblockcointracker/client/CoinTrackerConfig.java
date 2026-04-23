@@ -18,6 +18,10 @@ public class CoinTrackerConfig {
     private float scale = 1.0f;
     private int timeoutMinutes = 5;
 
+    // Session state (persisted between restarts)
+    private long savedGain = 0;
+    private int savedElapsedSeconds = 0;
+
     private static CoinTrackerConfig instance;
 
     public static CoinTrackerConfig getInstance() {
@@ -75,4 +79,22 @@ public class CoinTrackerConfig {
     public void setTimeoutMinutes(int minutes) { this.timeoutMinutes = minutes; save(); }
 
     public int getTimeoutSeconds() { return timeoutMinutes * 60; }
+
+    public long getSavedGain() { return savedGain; }
+    public void setSavedGain(long gain) { this.savedGain = gain; save(); }
+
+    public int getSavedElapsedSeconds() { return savedElapsedSeconds; }
+    public void setSavedElapsedSeconds(int seconds) { this.savedElapsedSeconds = seconds; save(); }
+
+    public void saveSessionState(long gain, int elapsedSeconds) {
+        this.savedGain = gain;
+        this.savedElapsedSeconds = elapsedSeconds;
+        save();
+    }
+
+    public void clearSessionState() {
+        this.savedGain = 0;
+        this.savedElapsedSeconds = 0;
+        save();
+    }
 }

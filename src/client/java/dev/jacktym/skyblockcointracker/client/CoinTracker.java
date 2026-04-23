@@ -53,8 +53,8 @@ public class CoinTracker {
 
     public void enable() {
         CoinTrackerConfig.getInstance().setEnabled(true);
-        state.reset();
-        sendMessage("Tracker enabled (timer started)");
+        state.loadSavedState();
+        sendMessage("Tracker enabled (session restored)");
     }
 
     public void disable() {

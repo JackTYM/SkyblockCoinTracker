@@ -1,9 +1,13 @@
 name: Release
 
 on:
+  workflow_dispatch:
   push:
-    tags:
-      - 'v*'
+    branches: [ master, main ]
+    paths-ignore:
+      - '**.md'
+      - '.gitignore'
+      - 'LICENSE'
 
 jobs:
   release:
@@ -13,6 +17,32 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Get latest release version
+        id: get_latest
+        run: |
+          LATEST=$(gh release list --limit 1 --json tagName --jq '.[0].tagName // "v0.9"' 2>/dev/null || echo "v0.9")
+          # Strip 'v' prefix if present
+          LATEST_VERSION="${LATEST#v}"
+          echo "Latest version: $LATEST_VERSION"
+          echo "LATEST_VERSION=$LATEST_VERSION" >> $GITHUB_OUTPUT
+        env:
+          GH_TOKEN: ${{ github.token }}
+
+      - name: Calculate next version
+        id: next_version
+        run: |
+          LATEST="${{ steps.get_latest.outputs.LATEST_VERSION }}"
+          # Use awk to increment by 0.1
+          NEXT=$(echo "$LATEST" | awk -F. '{printf "%.1f", $1 + ($2 + 1) / 10}')
+          # Handle edge case where version might be whole number
+          if [[ "$LATEST" != *.* ]]; then
+            NEXT=$(echo "$LATEST + 0.1" | bc)
+          fi
+          echo "Next version: $NEXT"
+          echo "VERSION=$NEXT" >> $GITHUB_OUTPUT
 
       - name: Set up JDK 21
         uses: actions/setup-java@v4
@@ -25,15 +55,14 @@ jobs:
 
       - name: Build with Gradle
         run: ./gradlew build
-
-      - name: Get version from tag
-        id: get_version
-        run: echo "VERSION=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
+        env:
+          MOD_VERSION: ${{ steps.next_version.outputs.VERSION }}
 
       - name: Create Release
         uses: softprops/action-gh-release@v2
         with:
-          name: Release ${{ github.ref_name }}
+          tag_name: v${{ steps.next_version.outputs.VERSION }}
+          name: Release v${{ steps.next_version.outputs.VERSION }}
           draft: false
           prerelease: false
           generate_release_notes: true
