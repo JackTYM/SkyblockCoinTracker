@@ -4,6 +4,7 @@
   "package": "dev.jacktym.skyblockcointracker.mixin.client",
   "compatibilityLevel": "JAVA_21",
   "client": [
+    "ScoreboardMixin"
   ],
   "injectors": {
     "defaultRequire": 1
