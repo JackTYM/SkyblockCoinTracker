@@ -96,28 +96,11 @@ jobs:
           files: |
             build/libs/*[!-sources].jar
 
-      - name: Get Modrinth project ID
-        id: modrinth_id
-        env:
-          MODRINTH_TOKEN: ${{ secrets.MODRINTH_TOKEN }}
-        run: |
-          echo "Fetching project: ${{ vars.MODRINTH_PROJECT_ID }}"
-          HTTP_CODE=$(curl -s -o response.json -w "%{http_code}" \
-            -H "User-Agent: JackTYM/SkyblockCoinTracker/github-actions" \
-            -H "Authorization: $MODRINTH_TOKEN" \
-            "https://api.modrinth.com/v2/project/${{ vars.MODRINTH_PROJECT_ID }}")
-          echo "HTTP Status: $HTTP_CODE"
-          echo "Response: $(cat response.json)"
-          PROJECT_ID=$(jq -r '.id // empty' response.json 2>/dev/null || echo "")
-          echo "Resolved project ID: $PROJECT_ID"
-          echo "PROJECT_ID=$PROJECT_ID" >> $GITHUB_OUTPUT
-
       - name: Publish to Modrinth
-        if: steps.modrinth_id.outputs.PROJECT_ID != ''
         continue-on-error: true
         uses: Kir-Antipov/mc-publish@v3.3
         with:
-          modrinth-id: ${{ steps.modrinth_id.outputs.PROJECT_ID }}
+          modrinth-id: ${{ vars.MODRINTH_PROJECT_ID }}
           modrinth-token: ${{ secrets.MODRINTH_TOKEN }}
 
           files: build/libs/!(*-sources).jar
