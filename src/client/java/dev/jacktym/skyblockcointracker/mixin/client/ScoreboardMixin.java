@@ -3,6 +3,7 @@ package dev.jacktym.skyblockcointracker.mixin.client;
 import dev.jacktym.skyblockcointracker.client.CoinTracker;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientPacketListener;
+import net.minecraft.network.protocol.game.ClientboundSetPlayerTeamPacket;
 import net.minecraft.network.protocol.game.ClientboundSetScorePacket;
 import net.minecraft.world.scores.DisplaySlot;
 import net.minecraft.world.scores.Objective;
@@ -19,7 +20,15 @@ public class ScoreboardMixin {
 
     @Inject(method = "handleSetScore", at = @At("TAIL"))
     private void onScoreboardScoreUpdate(ClientboundSetScorePacket packet, CallbackInfo ci) {
-        // Read the sidebar scoreboard directly
+        scanScoreboard();
+    }
+
+    @Inject(method = "handleSetPlayerTeamPacket", at = @At("TAIL"))
+    private void onTeamUpdate(ClientboundSetPlayerTeamPacket packet, CallbackInfo ci) {
+        scanScoreboard();
+    }
+
+    private void scanScoreboard() {
         Minecraft client = Minecraft.getInstance();
         if (client.level == null) return;
 
@@ -27,12 +36,10 @@ public class ScoreboardMixin {
         Objective sidebar = scoreboard.getDisplayObjective(DisplaySlot.SIDEBAR);
         if (sidebar == null) return;
 
-        // Iterate through all scores in the sidebar
         for (PlayerScoreEntry entry : scoreboard.listPlayerScores(sidebar)) {
             String owner = entry.owner();
             PlayerTeam team = scoreboard.getPlayersTeam(owner);
 
-            // Build the display line from team prefix + owner + suffix
             String line;
             if (team != null) {
                 String prefix = team.getPlayerPrefix().getString();

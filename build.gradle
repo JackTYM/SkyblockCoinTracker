@@ -19,6 +19,12 @@ loom {
             sourceSet sourceSets.client
         }
     }
+
+    runs {
+        client {
+            vmArg "-Ddevauth.enabled=true"
+        }
+    }
 }
 
 fabricApi {
